@@ -218,7 +218,6 @@ async function loadKits() {
       "Could not load the Players tab. Make sure your tab is named 'Players' and the sheet is published to the web.";
   });
 
-  loadPlayers().catch(err => { /* existing */ });
 loadKits().catch(err => { console.error(err); });
 
 setInterval(() => loadPlayers().catch(()=>{}), 30000);

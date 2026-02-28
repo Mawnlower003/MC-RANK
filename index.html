@@ -146,7 +146,7 @@
     if (!res.ok) throw new Error("CSV fetch failed");
     const csv = await res.text();
     const rows = parseCSV(csv);
-  function escapeHtml(s) {
+ function escapeHtml(s) {
   return (s || "").replace(/[&<>"']/g, c => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
   })[c]);
@@ -157,7 +157,7 @@ function renderKits(kits) {
   if (!el) return;
 
   if (!kits.length) {
-    el.innerHTML = `<div class="muted">No kits found. Add a sheet tab named <strong>Kits</strong>.</div>`;
+    el.innerHTML = `<div class="muted">No kits found. Add a sheet tab named <strong>Kits</strong> with columns: Mode, Kit, Notes.</div>`;
     return;
   }
 
@@ -176,10 +176,7 @@ async function loadKits() {
   const csv = await res.text();
   const rows = parseCSV(csv);
 
-  // Expect header row then data:
-  // Mode, Kit, Notes
   const data = rows.slice(1).filter(r => (r[0] || "").trim());
-
   const kits = data.map(r => ({
     mode: (r[0] || "").trim(),
     kit: (r[1] || "").trim(),

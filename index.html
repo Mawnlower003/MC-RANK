@@ -353,29 +353,30 @@ td:nth-child(4) .pill {
   box-shadow: 0 10px 25px rgba(125,123,255,0.45);
 }
 
-/* ===== FORCE tier pills to be clean circles (override everything) ===== */
+/* ===== Perfect Clean Tier Circle ===== */
+
 td:nth-child(4) .pill {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  display: grid !important;
+  place-items: center !important;   /* perfect centering */
 
   width: 28px !important;
   height: 28px !important;
+
+  border-radius: 50% !important;
+
   padding: 0 !important;
   margin: 0 auto !important;
 
-  border-radius: 50% !important;
   border: none !important;
   box-shadow: none !important;
 
-  background: #efb675 !important; /* fallback */
-  color: #111 !important;
-
-  line-height: 1 !important;
   font-weight: 700 !important;
   font-size: 13px !important;
-}
+  line-height: 1 !important;
 
+  text-align: center !important;
+}
+    
 /* tier colors */
 td:nth-child(4) .tier-S { background: #f37474 !important; }
 td:nth-child(4) .tier-A { background: #efb675 !important; }
@@ -385,6 +386,10 @@ td:nth-child(4) .tier-D { background: #aee86e !important; }
 td:nth-child(4) .tier-E { background: #7b7ce6 !important; color: #fff !important; }
 td:nth-child(4) .tier-F { background: #b07bb3 !important; color: #fff !important; }
 
+td:nth-child(4) .pill::before {
+  display: none !important;
+  content: none !important;
+}
     
   </style>
 </head>

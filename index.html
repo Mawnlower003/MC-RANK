@@ -68,11 +68,11 @@
   // Your published sheet base:
   const BASE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTPhJ75e207ll1_Tl6cyiX72A0dbepjDvC7ZUnI6gxS1ymrvG6vzjFxi03GeXgAop_gwPYgsg48-jRW";
 
-  // Pull tabs as CSV
+  // Pull Players tab as CSV
   const PLAYERS_CSV = `${BASE}/pub?output=csv&sheet=${encodeURIComponent("Players")}`;
-  const KITS_CSV    = `${BASE}/pub?output=csv&sheet=${encodeURIComponent("Kits")}`;
-
+  const KITS_CSV = `${BASE}/pub?output=csv&sheet=${encodeURIComponent("Kits")}`;
   function parseCSV(csvText) {
+    // Minimal CSV parser (handles quotes)
     const rows = [];
     let row = [], cur = "", inQuotes = false;
     for (let i = 0; i < csvText.length; i++) {
@@ -94,16 +94,9 @@
 
   function pct(n) { return isFinite(n) ? `${Math.round(n * 1000) / 10}%` : ""; }
 
-  function escapeHtml(s) {
-    return (s || "").replace(/[&<>"']/g, c => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-    })[c]);
-  }
-
-  // ---------------- Players ----------------
   let players = [];
 
-  function renderPlayers() {
+  function render() {
     const search = document.getElementById("search").value.trim().toLowerCase();
     const region = document.getElementById("region").value;
     const tier = document.getElementById("tier").value;
@@ -132,9 +125,9 @@
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${idx + 1}</td>
-        <td><strong>${escapeHtml(p.player)}</strong></td>
-        <td><span class="pill">${escapeHtml(p.region || "")}</span></td>
-        <td><span class="pill">${escapeHtml(p.tier || "")}</span></td>
+        <td><strong>${p.player}</strong></td>
+        <td><span class="pill">${p.region || ""}</span></td>
+        <td><span class="pill">${p.tier || ""}</span></td>
         <td>${Math.round(p.rating)}</td>
         <td>${p.wins}</td>
         <td>${p.losses}</td>
@@ -150,10 +143,52 @@
 
   async function loadPlayers() {
     const res = await fetch(PLAYERS_CSV, { cache: "no-store" });
-    if (!res.ok) throw new Error("Players CSV fetch failed");
+    if (!res.ok) throw new Error("CSV fetch failed");
     const csv = await res.text();
     const rows = parseCSV(csv);
+  function escapeHtml(s) {
+  return (s || "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  })[c]);
+}
 
+function renderKits(kits) {
+  const el = document.getElementById("kits");
+  if (!el) return;
+
+  if (!kits.length) {
+    el.innerHTML = `<div class="muted">No kits found. Add a sheet tab named <strong>Kits</strong>.</div>`;
+    return;
+  }
+
+  el.innerHTML = kits.map(k => `
+    <div class="kit-card">
+      <h3 class="kit-title">${escapeHtml(k.mode)}</h3>
+      <pre class="kit-pre">${escapeHtml(k.kit)}</pre>
+      ${k.notes ? `<div class="muted" style="margin-top:8px;">${escapeHtml(k.notes)}</div>` : ""}
+    </div>
+  `).join("");
+}
+
+async function loadKits() {
+  const res = await fetch(KITS_CSV, { cache: "no-store" });
+  if (!res.ok) throw new Error("Kits CSV fetch failed");
+  const csv = await res.text();
+  const rows = parseCSV(csv);
+
+  // Expect header row then data:
+  // Mode, Kit, Notes
+  const data = rows.slice(1).filter(r => (r[0] || "").trim());
+
+  const kits = data.map(r => ({
+    mode: (r[0] || "").trim(),
+    kit: (r[1] || "").trim(),
+    notes: (r[2] || "").trim(),
+  }));
+
+  renderKits(kits);
+}
+    // Expect header row then data:
     // Region, Players, StartRating, Rating, Wins, Losses, Matches, Tier
     const data = rows.slice(1).filter(r => r[1] && r[1].trim());
 
@@ -169,65 +204,26 @@
       return { region, player, rating, wins, losses, matches, tier, winRate };
     });
 
-    renderPlayers();
+    render();
   }
 
-  // ---------------- Kits ----------------
-  function renderKits(kits) {
-    const el = document.getElementById("kits");
-    if (!el) return;
-
-    if (!kits.length) {
-      el.innerHTML = `<div class="muted">No kits found. Add a sheet tab named <strong>Kits</strong> with columns: Mode, Kit, Notes.</div>`;
-      return;
-    }
-
-    el.innerHTML = kits.map(k => `
-      <div class="kit-card">
-        <h3 class="kit-title">${escapeHtml(k.mode)}</h3>
-        <pre class="kit-pre">${escapeHtml(k.kit)}</pre>
-        ${k.notes ? `<div class="muted" style="margin-top:8px;">${escapeHtml(k.notes)}</div>` : ""}
-      </div>
-    `).join("");
-  }
-
-  async function loadKits() {
-    const res = await fetch(KITS_CSV, { cache: "no-store" });
-    if (!res.ok) throw new Error("Kits CSV fetch failed");
-    const csv = await res.text();
-    const rows = parseCSV(csv);
-
-    // Mode, Kit, Notes
-    const data = rows.slice(1).filter(r => (r[0] || "").trim());
-    const kits = data.map(r => ({
-      mode: (r[0] || "").trim(),
-      kit: (r[1] || "").trim(),
-      notes: (r[2] || "").trim(),
-    }));
-
-    renderKits(kits);
-  }
-
-  // ---------------- Controls + boot ----------------
   ["search","region","tier","sort"].forEach(id => {
-    document.getElementById(id).addEventListener("input", renderPlayers);
-    document.getElementById(id).addEventListener("change", renderPlayers);
+    document.getElementById(id).addEventListener("input", render);
+    document.getElementById(id).addEventListener("change", render);
   });
 
   loadPlayers().catch(err => {
     console.error(err);
     document.getElementById("status").textContent =
-      "Could not load the Players tab. Make sure the sheet is published and the tab is named 'Players'.";
+      "Could not load the Players tab. Make sure your tab is named 'Players' and the sheet is published to the web.";
   });
 
-  loadKits().catch(err => {
-    console.error(err);
-    const el = document.getElementById("kits");
-    if (el) el.innerHTML = `<div class="muted">Could not load Kits. Make sure tab name is <strong>Kits</strong> and the sheet is published.</div>`;
-  });
+  loadPlayers().catch(err => { /* existing */ });
+loadKits().catch(err => { console.error(err); });
 
+setInterval(() => loadPlayers().catch(()=>{}), 30000);
+setInterval(() => loadKits().catch(()=>{}), 30000);
   setInterval(() => loadPlayers().catch(()=>{}), 30000);
-  setInterval(() => loadKits().catch(()=>{}), 30000);
 </script>
 </body>
 </html>

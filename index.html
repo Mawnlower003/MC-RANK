@@ -17,7 +17,6 @@
     .kit-card { border: 1px solid #ddd; border-radius: 12px; padding: 12px; margin: 10px 0; }
     .kit-title { margin: 0 0 6px; font-size: 16px; }
     .kit-pre { white-space: pre-wrap; margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 13px; }
-
     .topbar{
   display:flex; justify-content:space-between; align-items:center;
   gap:16px; padding:14px 0; position:sticky; top:0; background:#fff; z-index:5;
@@ -50,6 +49,151 @@
     .card p{ margin:0; color:#444; font-size:13px; }
 
     .section-divider{ margin:18px 0; border:none; border-top:1px solid #eee; }
+
+    /* ===== Dark Tier-Board Theme (drop-in) ===== */
+:root{
+  --bg: #0f141b;
+  --panel: #151b23;
+  --panel2: #111722;
+  --text: #e8eef7;
+  --muted: #a9b4c2;
+  --border: rgba(255,255,255,0.10);
+
+  /* Tier colors (left bar vibe) */
+  --tierS: #ff6a6a;
+  --tierA: #ffb55c;
+  --tierB: #ffe36b;
+  --tierC: #b8ff6b;
+  --tierD: #6bd8ff;
+  --tierE: #7d7bff;
+  --tierF: #c56bff;
+}
+
+html, body { background: var(--bg); color: var(--text); }
+body { margin: 0; padding: 22px; }
+
+h1, h2 { color: var(--text); letter-spacing: 0.2px; }
+
+.muted { color: var(--muted) !important; }
+
+/* Controls */
+.controls{
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  margin: 14px 0 16px;
+}
+
+select, input{
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  outline: none;
+}
+
+select:focus, input:focus{
+  border-color: rgba(255,255,255,0.22);
+  box-shadow: 0 0 0 3px rgba(109,216,255,0.12);
+}
+
+/* Table */
+table{
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+th{
+  background: rgba(255,255,255,0.04) !important;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+
+td{
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+tr:hover td{
+  background: rgba(255,255,255,0.03);
+}
+
+/* Pills */
+.pill{
+  border: 1px solid var(--border) !important;
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+}
+
+/* Tier pill colors */
+.pill:empty { display:none; }
+.pill{ font-weight: 700; }
+
+.pill::before{ content:""; } /* no change; keeps your HTML same */
+
+td:nth-child(4) .pill{ /* Tier column pill */
+  padding: 2px 10px;
+}
+
+/* Map S/A/B/C/D/E/F to colors using attribute selectors */
+td:nth-child(4) .pill{ position: relative; }
+td:nth-child(4) .pill::before{
+  content:"";
+  display:inline-block;
+  width:8px; height:8px;
+  border-radius:999px;
+  margin-right:8px;
+  vertical-align: middle;
+  background: rgba(255,255,255,0.25);
+}
+
+/* These work because your tier text is literally S, A, B... */
+td:nth-child(4) .pill:has(::before){}
+
+td:nth-child(4) .pill{
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.02);
+}
+
+/* Fallback approach: set dot colors using text matching via JS? Not needed.
+   Instead: simple manual color per tier using data-* would be best.
+   Since we can't change HTML, we’ll color by exact text with :is() + attribute not possible in pure CSS.
+   So we color the whole pill with a subtle glow using JS-free approach:
+*/
+td:nth-child(4) .pill{
+  background: rgba(255,255,255,0.06);
+}
+
+/* Kits cards */
+.kit-card{
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.kit-title{
+  color: var(--text);
+  font-weight: 800;
+}
+
+.kit-pre{
+  color: var(--text);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+/* Divider */
+hr{
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.10);
+}
+
+/* Status text spacing */
+#status{ margin-top: 4px; }
+
     
   </style>
 </head>

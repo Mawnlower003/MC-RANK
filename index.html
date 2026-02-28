@@ -279,20 +279,24 @@ td, th {
   font-weight: 500;
 }
 
-/* ===== Clean Tier Circle (Final Clean Version) ===== */
+/* ===== Perfect Centered Tier Circle ===== */
 
 td:nth-child(4) .pill {
-  all: unset;                /* completely reset old styles */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: 28px;
   height: 28px;
+
+  display: flex;                 /* stronger centering than inline-flex */
+  align-items: center;
+  justify-content: center;
+
   border-radius: 50%;
   font-weight: 700;
   font-size: 13px;
-  color: #111;
-  background: #ccc;          /* fallback */
+  line-height: 1;                /* prevents vertical shift */
+  padding: 0;
+  margin: 0 auto;                /* keeps it centered in the cell */
+
+  border: none;
 }
 
 /* Tier Colors */

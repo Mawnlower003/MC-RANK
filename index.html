@@ -121,23 +121,24 @@
       </div>
     `).join("");
   }
+async function loadKits() {
+  const res = await fetch(KITS_CSV, { cache: "no-store" }); // MUST be KITS_CSV
+  if (!res.ok) throw new Error("Kits CSV fetch failed");
+  const csv = await res.text();
+  const rows = parseCSV(csv);
 
-  async function loadKits() {
-    const res = await fetch(KITS_CSV, { cache: "no-store" });
-    if (!res.ok) throw new Error("Kits CSV fetch failed");
-    const csv = await res.text();
-    const rows = parseCSV(csv);
+  // Expect header row then data:
+  // Mode, Kit, Notes
+  const data = rows.slice(1).filter(r => (r[0] || "").trim());
+  const kits = data.map(r => ({
+    mode: (r[0] || "").trim(),
+    kit: (r[1] || "").trim(),
+    notes: (r[2] || "").trim(),
+  }));
 
-    // Mode, Kit, Notes
-    const data = rows.slice(1).filter(r => (r[0] || "").trim());
-    const kits = data.map(r => ({
-      mode: (r[0] || "").trim(),
-      kit: (r[1] || "").trim(),
-      notes: (r[2] || "").trim(),
-    }));
-
-    renderKits(kits);
-  }
+  renderKits(kits);
+}
+ 
   // ---------------------------------------------------------
 
   let players = [];

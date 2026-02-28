@@ -194,7 +194,44 @@ hr{
 /* Status text spacing */
 #status{ margin-top: 4px; }
 
-    
+    /* ===== Exact Tier Colors ===== */
+:root{
+  --tierS: #f37474;
+  --tierA: #efb675;
+  --tierB: #edd27a;
+  --tierC: #e6ef73;
+  --tierD: #aee86e;
+  --tierE: #7b7ce6;
+  --tierF: #b07bb3;
+}
+
+/* Tier Pill Base */
+td:nth-child(4) .pill{
+  font-weight: 700;
+  border: none !important;
+  color: #111;
+}
+
+/* S */
+td:nth-child(4) .pill:contains("S"){ background: var(--tierS); }
+
+/* A */
+td:nth-child(4) .pill:contains("A"){ background: var(--tierA); }
+
+/* B */
+td:nth-child(4) .pill:contains("B"){ background: var(--tierB); }
+
+/* C */
+td:nth-child(4) .pill:contains("C"){ background: var(--tierC); }
+
+/* D */
+td:nth-child(4) .pill:contains("D"){ background: var(--tierD); }
+
+/* E */
+td:nth-child(4) .pill:contains("E"){ background: var(--tierE); color:#fff; }
+
+/* F */
+td:nth-child(4) .pill:contains("F"){ background: var(--tierF); color:#fff; }
   </style>
 </head>
 <body>
@@ -428,6 +465,9 @@ async function loadKits() {
 
     document.getElementById("status").textContent =
       `Showing ${filtered.length} player(s). Refreshes every 30 seconds.`;
+
+     applyTierColors();
+    
   }
 
   async function loadPlayers() {
@@ -453,6 +493,30 @@ async function loadKits() {
 
     render();
   }
+
+  
+
+  function applyTierColors(){
+  document.querySelectorAll("td:nth-child(4) .pill").forEach(p => {
+    const tier = p.textContent.trim();
+    const colors = {
+      S: "#f37474",
+      A: "#efb675",
+      B: "#edd27a",
+      C: "#e6ef73",
+      D: "#aee86e",
+      E: "#7b7ce6",
+      F: "#b07bb3"
+    };
+    if(colors[tier]){
+      p.style.background = colors[tier];
+      p.style.border = "none";
+      p.style.color = (tier === "E" || tier === "F") ? "#fff" : "#111";
+    }
+  });
+}
+
+  
 
   ["search","region","tier","sort"].forEach(id => {
     document.getElementById(id).addEventListener("input", render);

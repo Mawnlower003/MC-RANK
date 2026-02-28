@@ -116,7 +116,13 @@
     el.innerHTML = kits.map(k => `
       <div class="kit-card">
         <h3 class="kit-title">${escapeHtml(k.mode)}</h3>
-        <pre class="kit-pre">${escapeHtml(k.kit)}</pre>
+        <ul class="kit-pre">
+  ${escapeHtml(k.kit)
+    .split(/\r?\n/)
+    .filter(line => line.trim())
+    .map(line => `<li>${line}</li>`)
+    .join("")}
+</ul>
         ${k.notes ? `<div class="muted" style="margin-top:8px;">${escapeHtml(k.notes)}</div>` : ""}
       </div>
     `).join("");

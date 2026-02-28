@@ -14,6 +14,9 @@
     th { position: sticky; top: 0; background: #fff; z-index: 1; }
     .muted { color: #666; font-size: 13px; }
     .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; border: 1px solid #ddd; font-size: 12px; }
+    .kit-card { border: 1px solid #ddd; border-radius: 12px; padding: 12px; margin: 10px 0; }
+.kit-title { margin: 0 0 6px; font-size: 16px; }
+.kit-pre { white-space: pre-wrap; margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 13px; }
   </style>
 </head>
 <body>
@@ -40,7 +43,10 @@
       <option value="matches_desc">Sort: Matches (high → low)</option>
     </select>
   </div>
-
+<h2>Ranked Kits</h2>
+<div class="muted">Auto-updates from the Kits tab in Google Sheets.</div>
+<div id="kits"></div>
+<hr style="margin:18px 0;" />
   <table>
     <thead>
       <tr>
@@ -64,7 +70,7 @@
 
   // Pull Players tab as CSV
   const PLAYERS_CSV = `${BASE}/pub?output=csv&sheet=${encodeURIComponent("Players")}`;
-
+const KITS_CSV = `${BASE}/pub?output=csv&sheet=${encodeURIComponent("Kits")}`;
   function parseCSV(csvText) {
     // Minimal CSV parser (handles quotes)
     const rows = [];
@@ -140,6 +146,48 @@
     if (!res.ok) throw new Error("CSV fetch failed");
     const csv = await res.text();
     const rows = parseCSV(csv);
+    function escapeHtml(s) {
+  return (s || "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  })[c]);
+}
+
+function renderKits(kits) {
+  const el = document.getElementById("kits");
+  if (!el) return;
+
+  if (!kits.length) {
+    el.innerHTML = `<div class="muted">No kits found. Add a sheet tab named <strong>Kits</strong>.</div>`;
+    return;
+  }
+
+  el.innerHTML = kits.map(k => `
+    <div class="kit-card">
+      <h3 class="kit-title">${escapeHtml(k.mode)}</h3>
+      <pre class="kit-pre">${escapeHtml(k.kit)}</pre>
+      ${k.notes ? `<div class="muted" style="margin-top:8px;">${escapeHtml(k.notes)}</div>` : ""}
+    </div>
+  `).join("");
+}
+
+async function loadKits() {
+  const res = await fetch(KITS_CSV, { cache: "no-store" });
+  if (!res.ok) throw new Error("Kits CSV fetch failed");
+  const csv = await res.text();
+  const rows = parseCSV(csv);
+
+  // Expect header row then data:
+  // Mode, Kit, Notes
+  const data = rows.slice(1).filter(r => (r[0] || "").trim());
+
+  const kits = data.map(r => ({
+    mode: (r[0] || "").trim(),
+    kit: (r[1] || "").trim(),
+    notes: (r[2] || "").trim(),
+  }));
+
+  renderKits(kits);
+}
 
     // Expect header row then data:
     // Region, Players, StartRating, Rating, Wins, Losses, Matches, Tier
@@ -171,6 +219,12 @@
       "Could not load the Players tab. Make sure your tab is named 'Players' and the sheet is published to the web.";
   });
   setInterval(() => loadPlayers().catch(()=>{}), 30000);
+loadPlayers().catch(err => { /* existing */ });
+
+  loadKits().catch(err => { console.error(err); });
+
+setInterval(() => loadPlayers().catch(()=>{}), 30000);
+setInterval(() => loadKits().catch(()=>{}), 30000);
 </script>
 </body>
 </html>

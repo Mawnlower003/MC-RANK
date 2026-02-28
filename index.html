@@ -279,20 +279,20 @@ td, th {
   font-weight: 500;
 }
 
-    /* ===== Clean Tier Circle ===== */
+/* ===== Clean Tier Circle (Final Clean Version) ===== */
 
 td:nth-child(4) .pill {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+  all: unset;                /* completely reset old styles */
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
   font-weight: 700;
   font-size: 13px;
-  padding: 0;
-  border: none !important;
   color: #111;
+  background: #ccc;          /* fallback */
 }
 
 /* Tier Colors */

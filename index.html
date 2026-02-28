@@ -43,10 +43,12 @@
       <option value="matches_desc">Sort: Matches (high → low)</option>
     </select>
   </div>
+
 <h2>Ranked Kits</h2>
 <div class="muted">Auto-updates from the Kits tab in Google Sheets.</div>
 <div id="kits"></div>
 <hr style="margin:18px 0;" />
+
   <table>
     <thead>
       <tr>
@@ -68,9 +70,10 @@
   // Your published sheet base:
   const BASE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTPhJ75e207ll1_Tl6cyiX72A0dbepjDvC7ZUnI6gxS1ymrvG6vzjFxi03GeXgAop_gwPYgsg48-jRW";
 
-  // Pull Players tab as CSV
+  // Pull tabs as CSV
   const PLAYERS_CSV = `${BASE}/pub?output=csv&sheet=${encodeURIComponent("Players")}`;
-  const KITS_CSV = `${BASE}/pub?output=csv&sheet=${encodeURIComponent("Kits")}`;
+  const KITS_CSV    = `${BASE}/pub?output=csv&sheet=${encodeURIComponent("Kits")}`;
+
   function parseCSV(csvText) {
     // Minimal CSV parser (handles quotes)
     const rows = [];
@@ -93,6 +96,49 @@
   }
 
   function pct(n) { return isFinite(n) ? `${Math.round(n * 1000) / 10}%` : ""; }
+
+  // ----------- KITS (FIXED: top-level functions) -----------
+  function escapeHtml(s) {
+    return (s || "").replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    })[c]);
+  }
+
+  function renderKits(kits) {
+    const el = document.getElementById("kits");
+    if (!el) return;
+
+    if (!kits.length) {
+      el.innerHTML = `<div class="muted">No kits found. Add a sheet tab named <strong>Kits</strong> with columns: Mode, Kit, Notes.</div>`;
+      return;
+    }
+
+    el.innerHTML = kits.map(k => `
+      <div class="kit-card">
+        <h3 class="kit-title">${escapeHtml(k.mode)}</h3>
+        <pre class="kit-pre">${escapeHtml(k.kit)}</pre>
+        ${k.notes ? `<div class="muted" style="margin-top:8px;">${escapeHtml(k.notes)}</div>` : ""}
+      </div>
+    `).join("");
+  }
+
+  async function loadKits() {
+    const res = await fetch(KITS_CSV, { cache: "no-store" });
+    if (!res.ok) throw new Error("Kits CSV fetch failed");
+    const csv = await res.text();
+    const rows = parseCSV(csv);
+
+    // Mode, Kit, Notes
+    const data = rows.slice(1).filter(r => (r[0] || "").trim());
+    const kits = data.map(r => ({
+      mode: (r[0] || "").trim(),
+      kit: (r[1] || "").trim(),
+      notes: (r[2] || "").trim(),
+    }));
+
+    renderKits(kits);
+  }
+  // ---------------------------------------------------------
 
   let players = [];
 
@@ -146,46 +192,7 @@
     if (!res.ok) throw new Error("CSV fetch failed");
     const csv = await res.text();
     const rows = parseCSV(csv);
- function escapeHtml(s) {
-  return (s || "").replace(/[&<>"']/g, c => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-  })[c]);
-}
 
-function renderKits(kits) {
-  const el = document.getElementById("kits");
-  if (!el) return;
-
-  if (!kits.length) {
-    el.innerHTML = `<div class="muted">No kits found. Add a sheet tab named <strong>Kits</strong> with columns: Mode, Kit, Notes.</div>`;
-    return;
-  }
-
-  el.innerHTML = kits.map(k => `
-    <div class="kit-card">
-      <h3 class="kit-title">${escapeHtml(k.mode)}</h3>
-      <pre class="kit-pre">${escapeHtml(k.kit)}</pre>
-      ${k.notes ? `<div class="muted" style="margin-top:8px;">${escapeHtml(k.notes)}</div>` : ""}
-    </div>
-  `).join("");
-}
-
-async function loadKits() {
-  const res = await fetch(KITS_CSV, { cache: "no-store" });
-  if (!res.ok) throw new Error("Kits CSV fetch failed");
-  const csv = await res.text();
-  const rows = parseCSV(csv);
-
-  const data = rows.slice(1).filter(r => (r[0] || "").trim());
-  const kits = data.map(r => ({
-    mode: (r[0] || "").trim(),
-    kit: (r[1] || "").trim(),
-    notes: (r[2] || "").trim(),
-  }));
-
-  renderKits(kits);
-}
-    // Expect header row then data:
     // Region, Players, StartRating, Rating, Wins, Losses, Matches, Tier
     const data = rows.slice(1).filter(r => r[1] && r[1].trim());
 
@@ -215,11 +222,10 @@ async function loadKits() {
       "Could not load the Players tab. Make sure your tab is named 'Players' and the sheet is published to the web.";
   });
 
-loadKits().catch(err => { console.error(err); });
+  loadKits().catch(err => { console.error(err); });
 
-setInterval(() => loadPlayers().catch(()=>{}), 30000);
-setInterval(() => loadKits().catch(()=>{}), 30000);
   setInterval(() => loadPlayers().catch(()=>{}), 30000);
+  setInterval(() => loadKits().catch(()=>{}), 30000);
 </script>
 </body>
 </html>

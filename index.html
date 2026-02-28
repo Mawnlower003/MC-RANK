@@ -303,6 +303,29 @@ td:nth-child(4) .pill {
 .tier-D { background: #aee86e; }
 .tier-E { background: #7b7ce6; color: #fff; }
 .tier-F { background: #b07bb3; color: #fff; }
+
+.kit-pre {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.kit-pre li {
+  position: relative;
+  padding-left: 16px;
+  margin: 6px 0;
+}
+
+.kit-pre li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #9fc7ff;
+}
     
   </style>
 </head>

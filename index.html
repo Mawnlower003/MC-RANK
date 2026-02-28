@@ -1,1 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MC Ranked Ladder</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 20px; }
+    h1 { margin: 0 0 10px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 16px; }
+    select, input { padding: 8px; font-size: 14px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { position: sticky; top: 0; background: #fff; z-index: 1; }
+    .muted { color: #666; font-size: 13px; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; border: 1px solid #ddd; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>MC Ranked Ladder</h1>
+  <div class="muted" id="status">Loading…</div>
 
+  <div class="controls">
+    <input id="search" placeholder="Search player…" />
+    <select id="region">
+      <option value="">All Regions</option>
+      <option value="NA">NA</option>
+      <option value="EU">EU</option>
+    </select>
+    <select id="tier">
+      <option value="">All Tiers</option>
+      <option value="S">S</option><option value="A">A</option><option value="B">B</option>
+      <option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option>
+    </select>
+    <select id="sort">
+      <option value="rating_desc">Sort: Rating (high → low)</option>
+      <option value="rating_asc">Sort: Rating (low → high)</option>
+      <option value="wins_desc">Sort: Wins (high → low)</option>
+      <option value="wr_desc">Sort: Win% (high → low)</option>
+      <option value="matches_desc">Sort: Matches (high → low)</option>
+    </select>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:70px;">Rank</th>
+        <th>Player</th>
+        <th style="width:90px;">Region</th>
+        <th style="width:90px;">Tier</th>
+        <th style="width:110px;">Rating</th>
+        <th style="width:90px;">W</th>
+        <th style="width:90px;">L</th>
+        <th style="width:110px;">Win%</th>
+        <th style="width:110px;">Matches</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+<script>
+  // Your published sheet base:
+  const BASE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTPhJ75e207ll1_Tl6cyiX72A0dbepjDvC7ZUnI6gxS1ymrvG6vzjFxi03GeXgAop_gwPYgsg48-jRW";
+
+  // Pull Players tab as CSV
+  const PLAYERS_CSV = `${BASE}/pub?output=csv&sheet=${encodeURIComponent("Players")}`;
+
+  function parseCSV(csvText) {
+    // Minimal CSV parser (handles quotes)
+    const rows = [];
+    let row = [], cur = "", inQuotes = false;
+    for (let i = 0; i < csvText.length; i++) {
+      const ch = csvText[i];
+      const next = csvText[i+1];
+      if (ch === '"' && inQuotes && next === '"') { cur += '"'; i++; continue; }
+      if (ch === '"') { inQuotes = !inQuotes; continue; }
+      if (ch === "," && !inQuotes) { row.push(cur); cur = ""; continue; }
+      if ((ch === "\n" || ch === "\r") && !inQuotes) {
+        if (cur.length || row.length) { row.push(cur); rows.push(row); }
+        row = []; cur = "";
+        continue;
+      }
+      cur += ch;
+    }
+    if (cur.length || row.length) { row.push(cur); rows.push(row); }
+    return rows;
+  }
+
+  function pct(n) { return isFinite(n) ? `${Math.round(n * 1000) / 10}%` : ""; }
+
+  let players = [];
+
+  function render() {
+    const search = document.getElementById("search").value.trim().toLowerCase();
+    const region = document.getElementById("region").value;
+    const tier = document.getElementById("tier").value;
+    const sort = document.getElementById("sort").value;
+
+    let filtered = players.filter(p => {
+      if (region && p.region !== region) return false;
+      if (tier && p.tier !== tier) return false;
+      if (search && !p.player.toLowerCase().includes(search)) return false;
+      return true;
+    });
+
+    const sorters = {
+      rating_desc: (a,b) => b.rating - a.rating,
+      rating_asc:  (a,b) => a.rating - b.rating,
+      wins_desc:   (a,b) => b.wins - a.wins,
+      wr_desc:     (a,b) => (b.winRate - a.winRate),
+      matches_desc:(a,b) => b.matches - a.matches,
+    };
+    filtered.sort(sorters[sort] || sorters.rating_desc);
+
+    const tbody = document.getElementById("rows");
+    tbody.innerHTML = "";
+
+    filtered.forEach((p, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${idx + 1}</td>
+        <td><strong>${p.player}</strong></td>
+        <td><span class="pill">${p.region || ""}</span></td>
+        <td><span class="pill">${p.tier || ""}</span></td>
+        <td>${Math.round(p.rating)}</td>
+        <td>${p.wins}</td>
+        <td>${p.losses}</td>
+        <td>${pct(p.winRate)}</td>
+        <td>${p.matches}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById("status").textContent =
+      `Showing ${filtered.length} player(s). Refreshes every 30 seconds.`;
+  }
+
+  async function loadPlayers() {
+    const res = await fetch(PLAYERS_CSV, { cache: "no-store" });
+    if (!res.ok) throw new Error("CSV fetch failed");
+    const csv = await res.text();
+    const rows = parseCSV(csv);
+
+    // Expect header row then data:
+    // Region, Players, StartRating, Rating, Wins, Losses, Matches, Tier
+    const data = rows.slice(1).filter(r => r[1] && r[1].trim());
+
+    players = data.map(r => {
+      const region = (r[0] || "").trim();
+      const player = (r[1] || "").trim();
+      const rating = Number(r[3]) || 0;
+      const wins = Number(r[4]) || 0;
+      const losses = Number(r[5]) || 0;
+      const matches = Number(r[6]) || (wins + losses);
+      const tier = (r[7] || "").trim();
+      const winRate = (wins + losses) > 0 ? wins / (wins + losses) : 0;
+      return { region, player, rating, wins, losses, matches, tier, winRate };
+    });
+
+    render();
+  }
+
+  ["search","region","tier","sort"].forEach(id => {
+    document.getElementById(id).addEventListener("input", render);
+    document.getElementById(id).addEventListener("change", render);
+  });
+
+  loadPlayers().catch(err => {
+    console.error(err);
+    document.getElementById("status").textContent =
+      "Could not load the Players tab. Make sure your tab is named 'Players' and the sheet is published to the web.";
+  });
+  setInterval(() => loadPlayers().catch(()=>{}), 30000);
+</script>
+</body>
+</html>

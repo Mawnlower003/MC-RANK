@@ -278,6 +278,31 @@ td, th {
   font-size: 14px;
   font-weight: 500;
 }
+
+    /* ===== Clean Tier Circle ===== */
+
+td:nth-child(4) .pill {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 0;
+  border: none !important;
+  color: #111;
+}
+
+/* Tier Colors */
+.tier-S { background: #f37474; }
+.tier-A { background: #efb675; }
+.tier-B { background: #edd27a; }
+.tier-C { background: #e6ef73; }
+.tier-D { background: #aee86e; }
+.tier-E { background: #7b7ce6; color: #fff; }
+.tier-F { background: #b07bb3; color: #fff; }
     
   </style>
 </head>
@@ -534,27 +559,12 @@ async function loadKits() {
   }
 
   
-
-  function applyTierColors(){
+function applyTierColors(){
   document.querySelectorAll("td:nth-child(4) .pill").forEach(p => {
     const tier = p.textContent.trim();
-    const colors = {
-      S: "#f37474",
-      A: "#efb675",
-      B: "#edd27a",
-      C: "#e6ef73",
-      D: "#aee86e",
-      E: "#7b7ce6",
-      F: "#b07bb3"
-    };
-    if(colors[tier]){
-      p.style.background = colors[tier];
-      p.style.border = "none";
-      p.style.color = (tier === "E" || tier === "F") ? "#fff" : "#111";
-    }
+    p.className = "pill tier-" + tier;
   });
 }
-
   
 
   ["search","region","tier","sort"].forEach(id => {

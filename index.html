@@ -224,6 +224,61 @@ td:nth-child(4) .pill:contains("E"){ background: var(--tierE); color:#fff; }
 
 /* F */
 td:nth-child(4) .pill:contains("F"){ background: var(--tierF); color:#fff; }
+
+/* ===== Improve Font Readability ===== */
+
+/* Use a stronger modern font stack */
+body {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont,
+               "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
+               "Helvetica Neue", sans-serif;
+  font-weight: 500;
+  color: #eaf1ff;
+}
+
+/* Make headings clearer */
+h1, h2, h3 {
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+}
+
+/* Improve card titles */
+.card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Improve card text */
+.card p {
+  font-size: 14px;
+  color: #cfd8e6;
+}
+
+/* Improve link visibility */
+a {
+  color: #9fc7ff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+/* Improve muted text */
+.muted {
+  color: #a8b3c7 !important;
+}
+
+/* Make table text stronger */
+td, th {
+  font-size: 14px;
+  font-weight: 500;
+}
+    
   </style>
 </head>
 <body>

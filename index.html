@@ -390,6 +390,71 @@ td:nth-child(4) .pill::before {
   display: none !important;
   content: none !important;
 }
+
+    .tabbtn{
+  appearance:none;
+  border:1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color:#eaf1ff;
+  padding:10px 14px;
+  border-radius:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.tabbtn.active{
+  background: linear-gradient(135deg, #5f8cff, #7d7bff);
+  border-color: transparent;
+}
+
+.tier-row{
+  display:grid;
+  grid-template-columns: 70px 1fr;
+  gap:12px;
+  margin:12px 0;
+  padding:12px;
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+}
+
+.tier-label{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  border-radius:12px;
+  color:#111;
+  height:56px;
+}
+
+.tier-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:flex-start;
+}
+
+.chip{
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+  padding:8px 10px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
+}
+
+.chip strong{ font-size:14px; }
+.chip span{ font-size:12px; color:#cfd8e6; }
+
+/* exact tier colors you wanted */
+.tS{ background:#f37474; }
+.tA{ background:#efb675; }
+.tB{ background:#edd27a; }
+.tC{ background:#e6ef73; }
+.tD{ background:#aee86e; }
+.tE{ background:#7b7ce6; color:#fff; }
+.tF{ background:#b07bb3; color:#fff; }
     
   </style>
 </head>
@@ -442,6 +507,13 @@ td:nth-child(4) .pill::before {
   <h1>MC Ranked Ladder</h1>
   <div class="muted" id="status">Loading…</div>
 
+  <div class="controls" style="justify-content:flex-start;">
+  <button class="tabbtn" id="tabLadder">View Ladder</button>
+  <button class="tabbtn" id="tabTier">View Tierlist</button>
+</div>
+
+<div id="viewLadder">
+  
   <div class="controls">
     <input id="search" placeholder="Search player…" />
     <select id="region">
@@ -488,6 +560,15 @@ td:nth-child(4) .pill::before {
     <tbody id="rows"></tbody>
   </table>
 
+    </div>
+
+<div id="viewTier" style="display:none;">
+  <h2>Tier List</h2>
+  <div class="muted">Auto-sorted by ELO. Updates live from Google Sheets.</div>
+  <div id="tierBoard"></div>
+</div>
+
+  
     </section>
   
 <script>
@@ -643,8 +724,42 @@ async function loadKits() {
     });
 
     render();
+    renderTierlist();
   }
 
+function renderTierlist(){
+  const tiers = ["S","A","B","C","D","E","F"];
+  const tierBoard = document.getElementById("tierBoard");
+  if(!tierBoard) return;
+
+  const tierClass = {S:"tS",A:"tA",B:"tB",C:"tC",D:"tD",E:"tE",F:"tF"};
+
+  // group players by tier
+  const groups = {};
+  tiers.forEach(t => groups[t] = []);
+
+  players.forEach(p => {
+    const t = (p.tier || "").trim();
+    if(groups[t]) groups[t].push(p);
+  });
+
+  // sort each tier by rating desc
+  tiers.forEach(t => groups[t].sort((a,b)=> b.rating - a.rating));
+
+  tierBoard.innerHTML = tiers.map(t => `
+    <div class="tier-row">
+      <div class="tier-label ${tierClass[t]}">${t}</div>
+      <div class="tier-chips">
+        ${groups[t].length ? groups[t].map(p => `
+          <div class="chip">
+            <strong>${p.player}</strong>
+            <span>${Math.round(p.rating)} • ${p.region || ""}</span>
+          </div>
+        `).join("") : `<div class="muted">No players</div>`}
+      </div>
+    </div>
+  `).join("");
+}
   
 function applyTierColors(){
   document.querySelectorAll("td:nth-child(4) .pill").forEach(p => {
@@ -669,6 +784,27 @@ function applyTierColors(){
 
   setInterval(() => loadPlayers().catch(()=>{}), 30000);
   setInterval(() => loadKits().catch(()=>{}), 30000);
+
+function setView(which){
+  const ladder = document.getElementById("viewLadder");
+  const tier = document.getElementById("viewTier");
+  const b1 = document.getElementById("tabLadder");
+  const b2 = document.getElementById("tabTier");
+
+  const showLadder = which === "ladder";
+  ladder.style.display = showLadder ? "" : "none";
+  tier.style.display = showLadder ? "none" : "";
+
+  b1.classList.toggle("active", showLadder);
+  b2.classList.toggle("active", !showLadder);
+}
+
+// default
+setView("ladder");
+
+document.getElementById("tabLadder").addEventListener("click", () => setView("ladder"));
+document.getElementById("tabTier").addEventListener("click", () => setView("tier"));
+  
 </script>
 </body>
 </html>

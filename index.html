@@ -725,11 +725,14 @@ function renderTierlist(){
   const groups = {};
   tiers.forEach(t => groups[t] = []);
 
-  players.forEach(p => {
-    const t = (p.tier || "").trim();
-    if(groups[t]) groups[t].push(p);
-  });
+players.forEach(p => {
+  const played = (p.wins + p.losses) > 0;   // active only
+  if(!played) return;
 
+  const t = (p.tier || "").trim();
+  if(groups[t]) groups[t].push(p);
+});
+  
   // sort each tier by rating desc
   tiers.forEach(t => groups[t].sort((a,b)=> b.rating - a.rating));
 
